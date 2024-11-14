@@ -2,6 +2,12 @@
 import os
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 from time import time
+import kagglehub
+from accelerate import disk_offload
+
+os.environ["KAGGLE_USERNAME"] = "differentialplantain"
+os.environ["KAGGLE_KEY"] = "a68d72f82b6545eb6c269ead7de340ae"
+# Download latest version
 
 class ModelInterface(object):
 
@@ -10,7 +16,7 @@ class ModelInterface(object):
             You are an AI agent tasked to answer general questions in 
             a simple and short way.    
     """
-        self.path_to_model = "gemma-2-transformers-gemma-2-2b-it-v2"
+        self.path_to_model = kagglehub.model_download("google/gemma-2/transformers/gemma-2-2b")
         self.max_new_tokens = 128
         self.initialize_model()
 
@@ -24,8 +30,10 @@ class ModelInterface(object):
             return_dict=True,
             low_cpu_mem_usage=True,
             device_map="auto",
-            trust_remote_code=True
+            trust_remote_code=True,
+            offload_folder = "./offload"
         )
+        disk_offload(model=self.model, offload_dir="./offload")
         mod_time = time()
         print(f"Load model: {round(mod_time-tok_time, 1)} sec.")
 
